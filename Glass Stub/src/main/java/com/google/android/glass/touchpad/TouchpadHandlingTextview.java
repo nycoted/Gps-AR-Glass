@@ -1,4 +1,4 @@
-package com.google.gpsarglass.android.glass.touchpad;
+package com.google.android.glass.touchpad;
 
 import android.content.Context;
 import android.util.AttributeSet;
