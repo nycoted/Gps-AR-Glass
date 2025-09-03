@@ -1,9 +1,11 @@
-package com.Google.gpsarglass;
+package com.google.gpsarglass;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import com.Google.gpsarglass.R;
 
 public class StreetViewActivity extends Activity {
 

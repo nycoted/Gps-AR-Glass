@@ -1,4 +1,4 @@
-package com.Google.gpsarglass;
+package com.google.gpsarglass;
 
 
 import android.app.Activity;
@@ -8,10 +8,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.google.android.glass.touchpad.Gesture;
-import com.google.android.glass.touchpad.GestureDetector;
-import com.google.android.glass.app.VoiceTrigger;
-import com.google.android.glass.timeline.TimelineManager;
+
+import com.Google.gpsarglass.R;
 
 public class MainActivity extends Activity {
 

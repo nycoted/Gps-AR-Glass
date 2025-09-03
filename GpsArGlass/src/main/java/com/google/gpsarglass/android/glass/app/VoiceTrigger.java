@@ -1,4 +1,4 @@
-package com.google.android.glass.app;
+package com.google.gpsarglass.android.glass.app;
 
 public class VoiceTrigger {
     private String command;

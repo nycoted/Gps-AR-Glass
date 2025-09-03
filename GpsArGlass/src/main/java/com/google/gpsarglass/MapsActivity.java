@@ -1,11 +1,10 @@
 package com.google.gpsarglass;
 
-import android.location.Location;
+import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
-import android.content.Intent;
-import android.widget.Toast;
 import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.fragment.app.FragmentActivity;
 

@@ -1,40 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.Google.gpsarglass">
+    package="com.google.gpsarglass">
 
-    <!-- Permissions nécessaires -->
+    <!-- Permissions de base -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Spécifique aux Google Glass -->
+    <!-- Déclare que l’app est faite pour Glass -->
     <uses-feature
         android:name="android.hardware.type.glass"
         android:required="true" />
 
     <application
+        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme"
-        tools:replace="android:icon,android:label">
+        android:theme="@style/AppTheme">
 
-        <!-- Clé Google Maps -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCa8DC6azFLNM4fiZIsPnWRdvs3SCfNbjI" />
-
-        <!-- Écran principal (WebView / commandes vocales) -->
+        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Activité Google Maps -->
+        <!-- MapsActivity -->
         <activity
             android:name=".MapsActivity"
             android:exported="true"
@@ -44,20 +39,18 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="com.google.android.glass.action.VOICE_TRIGGER" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data
-                android:name="com.google.android.glass.VoiceTrigger"
-                android:resource="@xml/voice_trigger_start" />
         </activity>
 
-        <!-- Activité Street View (WebView simple) -->
+        <!-- StreetViewActivity -->
         <activity
             android:name=".StreetViewActivity"
             android:exported="false"
             android:label="Street View" />
-    </application>
 
+        <!-- Meta-data pour API Maps -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCa8DC6azFLNM4fiZIsPnWRdvs3SCfNbjI" />
+
+    </application>
 </manifest>
