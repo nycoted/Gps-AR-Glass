@@ -9,7 +9,7 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.Google.gpsarglass.R;
+import com.google.gpsarglass.R;
 
 public class MainActivity extends Activity {
 
@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         if ("com.example.ACTION_BUS_TIME".equals(action)) {
             gpsInfo.setText("Bus 72 dans 5 minutes");
         } else if ("com.example.ACTION_LOCATION".equals(action)) {
-            webView.loadUrl("https://maps.google.com/maps?q=ma_position&layer=s"); // vue satellite
+            webView.loadUrl("https://maps.google.com/maps?q=ma_position&layer=sv"); // vue StreetView
         } else if ("com.example.ACTION_ZOOM_IN".equals(action)) {
             webView.zoomIn();
         } else if ("com.example.ACTION_ZOOM_OUT".equals(action)) {

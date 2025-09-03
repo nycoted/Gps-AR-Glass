@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import com.Google.gpsarglass.R;
+import com.google.gpsarglass.R;
 
 public class StreetViewActivity extends Activity {
 
