@@ -19,15 +19,16 @@ import java.util.ArrayList;
 
 public class MapsActivity extends Activity implements OnMapReadyCallback {
     private GoogleMap mMap;
+    private MapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        // Initialisation de la map
+        // Initialisation de la map (syntaxe simplifiée)
         FragmentManager fm = getFragmentManager();
-        MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
+        mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
@@ -104,6 +105,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 }
+
 
 
 
