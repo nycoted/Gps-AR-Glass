@@ -3,13 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- WebView : affiche Google Maps / Street View -->
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Logo en overlay -->
     <ImageView
         android:id="@+id/logo"
         android:layout_width="100dp"
@@ -18,7 +16,6 @@
         android:layout_marginTop="16dp"
         android:src="@drawable/logo" />
 
-    <!-- Overlay : infos GPS -->
     <TextView
         android:id="@+id/gpsInfo"
         android:layout_width="wrap_content"
@@ -27,9 +24,8 @@
         android:layout_margin="10dp"
         android:text="Lat:0.0, Lng:0.0"
         android:textColor="#FFFFFF"
-        android:textSize="14sp" />
+        android:textSize="28sp" />
 
-    <!-- Overlay : flèche AR -->
     <ImageView
         android:id="@+id/arrow"
         android:layout_width="47dp"
@@ -37,10 +33,10 @@
         android:layout_gravity="center"
         android:src="@android:drawable/arrow_up_float" />
 
-    <!-- MapView (si tu veux afficher une map en plus du WebView) -->
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
 
 </FrameLayout>
