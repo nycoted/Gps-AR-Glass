@@ -14,7 +14,7 @@ public class StreetViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streetview);
 
-        WebView webView = (WebView) findViewById(R.id.webview);;
+        WebView webView = (WebView) findViewById(R.id.webview);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
