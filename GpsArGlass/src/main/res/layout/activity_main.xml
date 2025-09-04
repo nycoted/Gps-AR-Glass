@@ -15,8 +15,8 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="top|center_horizontal"
-        android:src="@drawable/logo"
-        android:contentDescription="Logo de l'application" />
+        android:layout_marginTop="16dp"
+        android:src="@drawable/logo" />
 
     <!-- Overlay : infos GPS -->
     <TextView
