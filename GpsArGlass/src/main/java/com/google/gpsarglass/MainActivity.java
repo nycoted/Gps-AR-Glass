@@ -11,34 +11,47 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.glass.eye.EyeGesture;
+import com.google.android.glass.eye.EyeGestureManager;
+
 public class MainActivity extends Activity {
     private WebView webView;
     private TextView gpsInfo;
     private ImageView arrow;
-    private ImageView logo; // <-- ajout du logo
+    private ImageView logo;
     private GestureDetector gestureDetector;
+    private EyeGestureManager eyeGestureManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Récupération des vues
+        // Récupération des vues (syntaxe demandée)
         webView = (WebView) findViewById(R.id.webview);
         gpsInfo = (TextView) findViewById(R.id.gpsInfo);
         arrow = (ImageView) findViewById(R.id.arrow);
-        logo = (ImageView) findViewById(R.id.logo); // <-- associe ton ImageView logo
+        logo = (ImageView) findViewById(R.id.logo);
 
         // Configurer le WebView
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         webView.loadUrl("https://www.google.com/maps/@48.8588443,2.2943506,3a,75y,90t");
 
-        // Exemple : rotation initiale du logo (optionnel)
-        logo.setRotation(0);
-
-        // Initialiser le détecteur de gestes
+        // Initialiser le détecteur de gestes tactiles
         gestureDetector = new GestureDetector(this, new GestureListener());
+
+        // Initialiser EyeGestureManager (clin d’œil)
+        eyeGestureManager = EyeGestureManager.from(this);
+        eyeGestureManager.register(EyeGesture.WINK, new EyeGestureManager.Listener() {
+            @Override
+            public void onDetected(EyeGesture eyeGesture) {
+                // Déclenche la caméra avec un clin d’œil
+                Toast.makeText(MainActivity.this, "Clin d’œil détecté : ouverture caméra", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -46,22 +59,7 @@ public class MainActivity extends Activity {
         return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        String action = intent.getAction();
-        if ("com.example.ACTION_BUS_TIME".equals(action)) {
-            gpsInfo.setText("Bus 72 dans 5 minutes");
-        } else if ("com.example.ACTION_LOCATION".equals(action)) {
-            webView.loadUrl("https://maps.google.com/maps?q=ma_position&layer=sv");
-        } else if ("com.example.ACTION_ZOOM_IN".equals(action)) {
-            webView.zoomIn();
-        } else if ("com.example.ACTION_ZOOM_OUT".equals(action)) {
-            webView.zoomOut();
-        }
-    }
-
-    // Classe interne pour gérer les gestes
+    // === Classe interne qui gère les gestes tactiles ===
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
@@ -69,16 +67,14 @@ public class MainActivity extends Activity {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             Toast.makeText(MainActivity.this, "Tap détecté", Toast.LENGTH_SHORT).show();
-            // Exemple : faire clignoter le logo sur tap
-            logo.setAlpha(logo.getAlpha() == 1f ? 0.5f : 1f);
             return true;
         }
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            // 🔹 Double-tap → recentrer sur la Tour Eiffel
-            Toast.makeText(MainActivity.this, "Double-tap : recentrage", Toast.LENGTH_SHORT).show();
-            webView.loadUrl("https://www.google.com/maps/@48.8588443,2.2943506,17z");
+            // Double-tap → recentrer sur ma position GPS
+            Toast.makeText(MainActivity.this, "Double-tap : recentrage GPS", Toast.LENGTH_SHORT).show();
+            webView.loadUrl("https://maps.google.com/maps?q=ma_position&layer=sv");
             return true;
         }
 
@@ -103,8 +99,9 @@ public class MainActivity extends Activity {
                 // Swipe vertical
                 if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                     if (diffY > 0) {
-                        webView.zoomOut();
-                        Toast.makeText(MainActivity.this, "Swipe bas : zoom out", Toast.LENGTH_SHORT).show();
+                        // Swipe bas → quitter app
+                        Toast.makeText(MainActivity.this, "Swipe bas : quitter l'application", Toast.LENGTH_SHORT).show();
+                        finish();
                     } else {
                         webView.zoomIn();
                         Toast.makeText(MainActivity.this, "Swipe haut : zoom in", Toast.LENGTH_SHORT).show();
