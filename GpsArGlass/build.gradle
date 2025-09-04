@@ -29,10 +29,6 @@ dependencies {
     // Librairies locales (dossier libs/)
     implementation fileTree(dir: "libs", include: ["*.jar"])
 
-    // Compatibilité Android API 19
-    //noinspection GradleDependency
-    implementation 'com.android.support:appcompat-v7:19.1.0'
-
     // Google Play Services (Maps + Localisation) version compatible API 19
     //noinspection GradleDependency
     implementation 'com.google.android.gms:play-services-maps:6.5.87'

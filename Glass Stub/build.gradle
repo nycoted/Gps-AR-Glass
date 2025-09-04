@@ -19,7 +19,6 @@ android {
 }
 
 dependencies {
-    // support v7 pour TextView, View, etc.
-    //noinspection GradleDependency
-    implementation 'com.android.support:appcompat-v7:19.1.0'
+    
+
 }
