@@ -19,30 +19,27 @@ import java.util.ArrayList;
 
 public class MapsActivity extends Activity implements OnMapReadyCallback {
     private GoogleMap mMap;
-    private MapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        // Initialisation de la map (syntaxe simplifiée)
+        // Map
         FragmentManager fm = getFragmentManager();
-        mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
 
-        // Lancer la reconnaissance vocale
+        // Reconnaissance vocale
         startVoiceRecognition();
     }
 
     private void startVoiceRecognition() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                "Donnez une commande (bus, train, streetview)");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Commande : bus, train, streetview, aller à …");
         startActivityForResult(intent, 1);
     }
 
@@ -50,8 +47,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-            ArrayList<String> results =
-                    data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
                 handleVoiceCommand(results.get(0).toLowerCase());
             }
@@ -65,10 +61,11 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             showTrainSchedules();
         } else if (command.contains("streetview")) {
             openStreetView();
+        } else if (command.startsWith("aller à")) {
+            String destination = command.replace("aller à", "").trim();
+            goToDestination(destination);
         } else {
-            Toast.makeText(this,
-                    "Commande non reconnue : " + command,
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Commande non reconnue : " + command, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -79,14 +76,22 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
     }
 
     private void showTrainSchedules() {
-        Toast.makeText(this, "Horaires de train affichés (exemple)",
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Horaires de train affichés (exemple)", Toast.LENGTH_SHORT).show();
     }
 
     private void openStreetView() {
-        Toast.makeText(this, "Ouverture de Street View...",
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Ouverture de Street View...", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, StreetViewActivity.class);
+        startActivity(intent);
+    }
+
+    private void goToDestination(String destination) {
+        Toast.makeText(this, "Navigation vers : " + destination, Toast.LENGTH_SHORT).show();
+
+        // Envoi à MainActivity → affichage WebView + flèche
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setAction("com.example.ACTION_GO_TO");
+        intent.putExtra("destination", destination);
         startActivity(intent);
     }
 
@@ -105,7 +110,3 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 }
-
-
-
-
