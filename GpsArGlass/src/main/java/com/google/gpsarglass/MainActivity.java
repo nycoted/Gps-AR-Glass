@@ -24,9 +24,9 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Récupération des vues
-        webView = findViewById(R.id.webview);
-        gpsInfo = findViewById(R.id.gpsInfo);
-        arrow = findViewById(R.id.arrow);
+        WebView webView = (WebView) findViewById(R.id.webview);
+        TextView gpsInfo = (TextView) findViewById(R.id.gpsInfo);
+        ImageView arrow = (ImageView) findViewById(R.id.arrow);
 
         // Configurer le WebView
         WebSettings settings = webView.getSettings();

@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import com.google.gpsarglass.R;
-
 public class StreetViewActivity extends Activity {
 
     private WebView webView;
@@ -16,7 +14,7 @@ public class StreetViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streetview);
 
-        webView = findViewById(R.id.webview);
+        WebView webView = (WebView) findViewById(R.id.webview);;
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
