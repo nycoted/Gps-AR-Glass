@@ -12,10 +12,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-
     private WebView webView;
     private TextView gpsInfo;
     private ImageView arrow;
+    private ImageView logo; // <-- ajout du logo
     private GestureDetector gestureDetector;
 
     @Override
@@ -24,14 +24,18 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Récupération des vues
-        WebView webView = (WebView) findViewById(R.id.webview);
-        TextView gpsInfo = (TextView) findViewById(R.id.gpsInfo);
-        ImageView arrow = (ImageView) findViewById(R.id.arrow);
+        webView = (WebView) findViewById(R.id.webview);
+        gpsInfo = (TextView) findViewById(R.id.gpsInfo);
+        arrow = (ImageView) findViewById(R.id.arrow);
+        logo = (ImageView) findViewById(R.id.logo); // <-- associe ton ImageView logo
 
         // Configurer le WebView
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         webView.loadUrl("https://www.google.com/maps/@48.8588443,2.2943506,3a,75y,90t");
+
+        // Exemple : rotation initiale du logo (optionnel)
+        logo.setRotation(0);
 
         // Initialiser le détecteur de gestes
         gestureDetector = new GestureDetector(this, new GestureListener());
@@ -46,7 +50,6 @@ public class MainActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String action = intent.getAction();
-
         if ("com.example.ACTION_BUS_TIME".equals(action)) {
             gpsInfo.setText("Bus 72 dans 5 minutes");
         } else if ("com.example.ACTION_LOCATION".equals(action)) {
@@ -60,13 +63,14 @@ public class MainActivity extends Activity {
 
     // Classe interne pour gérer les gestes
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
-
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             Toast.makeText(MainActivity.this, "Tap détecté", Toast.LENGTH_SHORT).show();
+            // Exemple : faire clignoter le logo sur tap
+            logo.setAlpha(logo.getAlpha() == 1f ? 0.5f : 1f);
             return true;
         }
 

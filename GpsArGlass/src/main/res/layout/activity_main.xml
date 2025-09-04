@@ -9,6 +9,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Logo en overlay -->
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="top|center_horizontal"
+        android:src="@drawable/logo"
+        android:contentDescription="Logo de l'application" />
+
     <!-- Overlay : infos GPS -->
     <TextView
         android:id="@+id/gpsInfo"
