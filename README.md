@@ -3,7 +3,8 @@
 Branchez vos Google Glass Explorer en USB. 
 Activez le mode développeur et USB debugging dans les paramètres.
 Installez l’application avec : adb install -r GpsArGlass.apk 4.
-Vérifiez que AnotherGlass est installé (obligatoire pour les gestes oculaires). ---
+Vérifiez que AnotherGlass est installé (obligatoire pour les gestes oculaires). 
+-Repo:inckie/AnotherGlass-
 ▶️ Lancement L’application démarre avec la carte (Google Maps / Street View).
 Vous verrez : une flèche directionnelle au centre,
 un texte GPS en bas, 
