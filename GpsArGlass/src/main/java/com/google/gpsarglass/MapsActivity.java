@@ -8,7 +8,6 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.view.Gravity;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -25,14 +24,13 @@ import java.util.Locale;
 public class MapsActivity extends Activity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private ImageView arrow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        // Initialisation de la carte
+        // Initialisation de la map
         FragmentManager fm = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
         if (mapFragment != null) {
@@ -48,7 +46,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                "Dites une commande : bus, train, streetview, aller à ...");
+                "Donnez une commande (bus, train, streetview, aller à ...)");
         startActivityForResult(intent, 1);
     }
 
@@ -70,10 +68,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         } else if (command.contains("train")) {
             showTrainSchedules();
         } else if (command.contains("streetview")) {
-            openStreetViewDemo();
+            openStreetView();
         } else if (command.startsWith("aller à")) {
-            String address = command.replace("aller à", "").trim();
-            goToDestination(address);
+            String destination = command.replace("aller à", "").trim();
+            goToDestination(destination);
         } else {
             Toast.makeText(this,
                     "Commande non reconnue : " + command,
@@ -92,8 +90,8 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                 Toast.LENGTH_SHORT).show();
     }
 
-    private void openStreetViewDemo() {
-        Toast.makeText(this, "Ouverture de Street View (démo)...",
+    private void openStreetView() {
+        Toast.makeText(this, "Ouverture de Street View...",
                 Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, StreetViewActivity.class);
         intent.putExtra("lat", -34.0);
@@ -106,7 +104,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         try {
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocationName(destinationName, 1);
-
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
                 LatLng destinationPoint = new LatLng(address.getLatitude(), address.getLongitude());
@@ -120,20 +117,25 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                 intent.putExtra("lat", address.getLatitude());
                 intent.putExtra("lng", address.getLongitude());
                 startActivity(intent);
-
             } else {
-                Toast.makeText(this, "Adresse introuvable : " + destinationName, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        "Adresse introuvable : " + destinationName,
+                        Toast.LENGTH_SHORT).show();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Erreur lors de la recherche d'adresse", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,
+                    "Erreur lors de la recherche d'adresse",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        // 🔹 Activer le pinch pour zoomer
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
 
         Toast toast = Toast.makeText(getApplicationContext(),
                 "Swipe vers le bas pour fermer l'application",
@@ -147,3 +149,4 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 }
+
