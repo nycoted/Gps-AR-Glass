@@ -2,34 +2,38 @@ package com.google.gpsarglass;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
+
+import com.google.android.gms.maps.StreetViewPanorama;
+import com.google.android.gms.maps.StreetViewPanoramaFragment;
+import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
 
 public class StreetViewActivity extends Activity {
-
-    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streetview);
 
-        WebView webView = (WebView) findViewById(R.id.webview);
+        double lat = getIntent().getDoubleExtra("lat", 0);
+        double lng = getIntent().getDoubleExtra("lng", 0);
 
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
+        // doit être final pour être utilisé dans la callback
+        final LatLng position = new LatLng(lat, lng);
 
-        // Exemple : Street View centré sur Sydney (-34,151)
-        String url = "https://maps.google.com/maps?q=&layer=c&cbll=-34,151&cbp=11,0,0,0,0";
-        webView.loadUrl(url);
-    }
+        StreetViewPanoramaFragment streetViewFragment =
+                (StreetViewPanoramaFragment) getFragmentManager()
+                        .findFragmentById(R.id.streetviewpanorama);
 
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
+        if (streetViewFragment != null) {
+            streetViewFragment.getStreetViewPanoramaAsync(
+                    new OnStreetViewPanoramaReadyCallback() {
+                        @Override
+                        public void onStreetViewPanoramaReady(StreetViewPanorama panorama) {
+                            panorama.setPosition(position);
+                        }
+                    });
         }
     }
 }
+
