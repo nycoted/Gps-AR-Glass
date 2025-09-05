@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class MapsActivity extends Activity implements OnMapReadyCallback {
-
     private GoogleMap mMap;
 
     @Override
@@ -30,14 +29,12 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        // Initialisation de la map
         FragmentManager fm = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
 
-        // Lancer la reconnaissance vocale
         startVoiceRecognition();
     }
 
@@ -46,7 +43,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                "Donnez une commande (bus, train, streetview, aller à ...)");
+                "Commande : bus, train, streetview, aller à [adresse]");
         startActivityForResult(intent, 1);
     }
 
@@ -54,8 +51,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-            ArrayList<String> results =
-                    data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
                 handleVoiceCommand(results.get(0).toLowerCase());
             }
@@ -63,90 +59,62 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
     }
 
     private void handleVoiceCommand(String command) {
-        if (command.contains("arrêt de bus")) {
-            showBusStops();
+        if (command.contains("bus")) {
+            Toast.makeText(this, "Récupération horaires bus...", Toast.LENGTH_SHORT).show();
+            // TODO: API Directions mode=transit
         } else if (command.contains("train")) {
-            showTrainSchedules();
+            Toast.makeText(this, "Récupération horaires train...", Toast.LENGTH_SHORT).show();
+            // TODO: API Directions mode=transit
         } else if (command.contains("streetview")) {
-            openStreetView();
-        } else if (command.startsWith("aller à")) {
+            openStreetView(-34, 151);
+        } else if (command.contains("aller à")) {
             String destination = command.replace("aller à", "").trim();
             goToDestination(destination);
         } else {
-            Toast.makeText(this,
-                    "Commande non reconnue : " + command,
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Commande non reconnue : " + command, Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void showBusStops() {
-        LatLng busStop = new LatLng(-34.001, 151.002);
-        mMap.addMarker(new MarkerOptions().position(busStop).title("Arrêt de bus"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(busStop, 15));
-    }
-
-    private void showTrainSchedules() {
-        Toast.makeText(this, "Horaires de train affichés (exemple)",
-                Toast.LENGTH_SHORT).show();
-    }
-
-    private void openStreetView() {
-        Toast.makeText(this, "Ouverture de Street View...",
-                Toast.LENGTH_SHORT).show();
+    private void openStreetView(double lat, double lng) {
         Intent intent = new Intent(this, StreetViewActivity.class);
-        intent.putExtra("lat", -34.0);
-        intent.putExtra("lng", 151.0);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lng", lng);
         startActivity(intent);
     }
 
-    // 🔹 Fonction pour traiter "aller à [adresse]"
     private void goToDestination(String destinationName) {
         try {
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocationName(destinationName, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
-                LatLng destinationPoint = new LatLng(address.getLatitude(), address.getLongitude());
+                LatLng point = new LatLng(address.getLatitude(), address.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(point).title(destinationName));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 16));
 
-                // Place un marker
-                mMap.addMarker(new MarkerOptions().position(destinationPoint).title(destinationName));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(destinationPoint, 16));
-
-                // Lance StreetView sur la destination
-                Intent intent = new Intent(this, StreetViewActivity.class);
-                intent.putExtra("lat", address.getLatitude());
-                intent.putExtra("lng", address.getLongitude());
-                startActivity(intent);
+                openStreetView(address.getLatitude(), address.getLongitude());
             } else {
-                Toast.makeText(this,
-                        "Adresse introuvable : " + destinationName,
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Adresse introuvable : " + destinationName, Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this,
-                    "Erreur lors de la recherche d'adresse",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erreur lors de la recherche d'adresse", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // 🔹 Activer le pinch pour zoomer
         mMap.getUiSettings().setZoomGesturesEnabled(true);
 
         Toast toast = Toast.makeText(getApplicationContext(),
-                "Swipe vers le bas pour fermer l'application",
+                "Swipe vers le bas pour quitter",
                 Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
 
-        // Exemple : un point par défaut
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 }
-
