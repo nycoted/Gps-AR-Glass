@@ -1,3 +1,5 @@
+
+
 package com.google.gpsarglass;
 
 import android.app.Activity;
@@ -17,6 +19,7 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,7 +49,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             mapFragment.getMapAsync(this);
         }
 
-        // 🔹 Démarrage auto reconnaissance vocale
+        // Démarrage auto de la reconnaissance vocale au lancement
         startVoiceRecognition();
     }
 
@@ -72,10 +75,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
 
     private void handleVoiceCommand(String command) {
         if (command.contains("bus")) {
-            Toast.makeText(this, "Récupération horaires bus...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Recherche des horaires bus...", Toast.LENGTH_SHORT).show();
             fetchTransitInfo("bus");
         } else if (command.contains("train")) {
-            Toast.makeText(this, "Récupération horaires train...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Recherche des horaires train...", Toast.LENGTH_SHORT).show();
             fetchTransitInfo("train");
         } else if (command.contains("streetview")) {
             openStreetView(-34, 151);
@@ -113,12 +116,13 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
-    // 🔹 API Google Directions pour horaires bus/train
+    // 🔹 Appel Google Directions API pour récupérer infos bus/train
     private void fetchTransitInfo(String mode) {
         try {
+            // Exemple d'origin/destination — remplace par ta logique (Geocoder / position réelle)
             String origin = "48.8584,2.2945"; // Exemple : Tour Eiffel
             String destination = "48.8809,2.3553"; // Exemple : Gare du Nord
-            String apiKey = getString(R.string.google_maps_key); // 🔹 clé stockée dans res/values/google_maps_api.xml
+            String apiKey = getString(R.string.google_maps_key); // récupère depuis release/res/values/google_maps_api.xml
 
             String url = "https://maps.googleapis.com/maps/api/directions/json?" +
                     "origin=" + origin +
@@ -130,10 +134,11 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
 
         } catch (Exception e) {
             e.printStackTrace();
+            Toast.makeText(this, "Erreur préparation requête transit", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // 🔹 Transit horaires
+    // 🔹 AsyncTask pour interroger Directions API
     private class FetchTransitTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -170,9 +175,37 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                             ? leg.getJSONObject("arrival_time").getString("text")
                             : "Non disponible";
 
+                    // Affichage à l'écran (Toast)
                     Toast.makeText(MapsActivity.this,
-                            "Départ : " + departure + "\nArrivée : " + arrival,
+                            "🚍 Départ : " + departure + "\n🏁 Arrivée : " + arrival,
                             Toast.LENGTH_LONG).show();
+
+                    // Si tu veux dessiner la polyline et étapes, récupère les polylines ici :
+                    // JSONArray steps = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps");
+                    // pour chaque step récupérer "polyline" -> "points" et utiliser decodePolyline(points)
+                    // Exemple basique :
+                    try {
+                        JSONObject route0 = routes.getJSONObject(0);
+                        JSONArray legs = route0.getJSONArray("legs");
+                        if (legs.length() > 0) {
+                            JSONArray steps = legs.getJSONObject(0).getJSONArray("steps");
+                            List<LatLng> path = new ArrayList<>();
+                            for (int i = 0; i < steps.length(); i++) {
+                                JSONObject step = steps.getJSONObject(i);
+                                if (step.has("polyline")) {
+                                    String poly = step.getJSONObject("polyline").getString("points");
+                                    path.addAll(decodePolyline(poly));
+                                }
+                            }
+                            if (path.size() > 0 && mMap != null) {
+                                PolylineOptions options = new PolylineOptions().addAll(path).width(8);
+                                mMap.addPolyline(options);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        // ignore polyline errors but keep schedules
+                        ex.printStackTrace();
+                    }
 
                 } else {
                     Toast.makeText(MapsActivity.this, "Aucun trajet trouvé", Toast.LENGTH_SHORT).show();
@@ -184,11 +217,12 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
-    // 🔹 Décode polyline
+    // 🔹 Décode polyline Google
     private List<LatLng> decodePolyline(String encoded) {
         List<LatLng> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
         int lat = 0, lng = 0;
+
         while (index < len) {
             int b, shift = 0, result = 0;
             do {
@@ -198,6 +232,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             } while (b >= 0x20);
             int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lat += dlat;
+
             shift = 0;
             result = 0;
             do {
@@ -207,6 +242,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             } while (b >= 0x20);
             int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lng += dlng;
+
             LatLng p = new LatLng(((double) lat / 1E5), ((double) lng / 1E5));
             poly.add(p);
         }
@@ -229,3 +265,4 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 }
+
