@@ -1,6 +1,7 @@
 package com.google.gpsarglass;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -32,29 +33,34 @@ public class StreetViewActivity extends Activity {
                     new OnStreetViewPanoramaReadyCallback() {
                         @Override
                         public void onStreetViewPanoramaReady(final StreetViewPanorama panorama) {
-                            // Placer la caméra à la position demandée
+                            // Position initiale
                             panorama.setPosition(position);
 
-                            // ✅ Activer toutes les options d'interaction
-                            panorama.setUserNavigationEnabled(true);   // Se déplacer dans la rue
-                            panorama.setZoomGesturesEnabled(true);    // Pinch pour zoom
-                            panorama.setPanningGesturesEnabled(true); // Swipe pour tourner caméra
-                            panorama.setStreetNamesEnabled(true);     // Affichage des rues
+                            // ✅ Activer toutes les options
+                            panorama.setUserNavigationEnabled(true);   // Marcher dans la rue
+                            panorama.setZoomGesturesEnabled(true);    // Pinch zoom
+                            panorama.setPanningGesturesEnabled(true); // Tourner caméra
+                            panorama.setStreetNamesEnabled(true);     // Noms de rue visibles
 
-                            // 🔹 Synchroniser la position quand on bouge dans Street View
+                            // 🔹 Synchroniser quand on bouge dans Street View
                             panorama.setOnStreetViewPanoramaChangeListener(
                                     new StreetViewPanorama.OnStreetViewPanoramaChangeListener() {
                                         @Override
                                         public void onStreetViewPanoramaChange(StreetViewPanoramaLocation location) {
                                             if (location != null && location.position != null) {
                                                 LatLng newPos = location.position;
+
+                                                // Affiche la position (debug utilisateur)
                                                 Toast.makeText(StreetViewActivity.this,
                                                         "Nouvelle position : " +
                                                                 newPos.latitude + ", " + newPos.longitude,
                                                         Toast.LENGTH_SHORT).show();
 
-                                                // Ici, tu pourrais envoyer cette nouvelle position à MapsActivity
-                                                // via Intent ou BroadcastReceiver pour déplacer aussi la carte.
+                                                // 🔹 Envoi de la nouvelle position à MapsActivity
+                                                Intent intent = new Intent("com.google.gpsarglass.UPDATE_MAP");
+                                                intent.putExtra("lat", newPos.latitude);
+                                                intent.putExtra("lng", newPos.longitude);
+                                                sendBroadcast(intent);
                                             }
                                         }
                                     });
@@ -63,6 +69,4 @@ public class StreetViewActivity extends Activity {
         }
     }
 }
-
-
 

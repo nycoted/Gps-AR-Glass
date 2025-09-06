@@ -1,10 +1,11 @@
-
-
 package com.google.gpsarglass;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
@@ -17,6 +18,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -37,6 +39,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private static final int VOICE_REQUEST_CODE = 1;
+    private BroadcastReceiver streetViewReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +51,35 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
+
+        // ✅ Receiver pour écouter StreetViewActivity
+        streetViewReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.google.gpsarglass.UPDATE_MAP".equals(intent.getAction())) {
+                    double lat = intent.getDoubleExtra("lat", 0);
+                    double lng = intent.getDoubleExtra("lng", 0);
+                    float bearing = intent.getFloatExtra("bearing", 0);
+
+                    LatLng newPoint = new LatLng(lat, lng);
+                    if (mMap != null) {
+                        mMap.clear();
+                        mMap.addMarker(new MarkerOptions().position(newPoint).title("StreetView position"));
+
+                        // Caméra synchronisée avec la direction (bearing)
+                        CameraPosition cameraPosition = new CameraPosition.Builder()
+                                .target(newPoint)
+                                .zoom(16)
+                                .bearing(bearing)
+                                .tilt(45)
+                                .build();
+
+                        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                    }
+                }
+            }
+        };
+        registerReceiver(streetViewReceiver, new IntentFilter("com.google.gpsarglass.UPDATE_MAP"));
 
         // Démarrage auto de la reconnaissance vocale au lancement
         startVoiceRecognition();
@@ -119,7 +151,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
     // 🔹 Appel Google Directions API pour récupérer infos bus/train
     private void fetchTransitInfo(String mode) {
         try {
-            // Exemple d'origin/destination — remplace par ta logique (Geocoder / position réelle)
             String origin = "48.8584,2.2945"; // Exemple : Tour Eiffel
             String destination = "48.8809,2.3553"; // Exemple : Gare du Nord
             String apiKey = getString(R.string.google_maps_key); // récupère depuis release/res/values/google_maps_api.xml
@@ -138,7 +169,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
-    // 🔹 AsyncTask pour interroger Directions API
     private class FetchTransitTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -175,15 +205,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                             ? leg.getJSONObject("arrival_time").getString("text")
                             : "Non disponible";
 
-                    // Affichage à l'écran (Toast)
                     Toast.makeText(MapsActivity.this,
                             "🚍 Départ : " + departure + "\n🏁 Arrivée : " + arrival,
                             Toast.LENGTH_LONG).show();
 
-                    // Si tu veux dessiner la polyline et étapes, récupère les polylines ici :
-                    // JSONArray steps = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps");
-                    // pour chaque step récupérer "polyline" -> "points" et utiliser decodePolyline(points)
-                    // Exemple basique :
                     try {
                         JSONObject route0 = routes.getJSONObject(0);
                         JSONArray legs = route0.getJSONArray("legs");
@@ -197,13 +222,12 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                                     path.addAll(decodePolyline(poly));
                                 }
                             }
-                            if (path.size() > 0 && mMap != null) {
+                            if (!path.isEmpty() && mMap != null) {
                                 PolylineOptions options = new PolylineOptions().addAll(path).width(8);
                                 mMap.addPolyline(options);
                             }
                         }
                     } catch (Exception ex) {
-                        // ignore polyline errors but keep schedules
                         ex.printStackTrace();
                     }
 
@@ -217,7 +241,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
-    // 🔹 Décode polyline Google
     private List<LatLng> decodePolyline(String encoded) {
         List<LatLng> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
@@ -263,6 +286,14 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (streetViewReceiver != null) {
+            unregisterReceiver(streetViewReceiver);
+        }
     }
 }
 
