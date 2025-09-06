@@ -2,80 +2,64 @@ package com.google.gpsarglass;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback;
 import com.google.android.gms.maps.StreetViewPanorama;
 import com.google.android.gms.maps.StreetViewPanoramaFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.StreetViewPanoramaLocation;
 
-public class StreetViewActivity extends Activity implements OnStreetViewPanoramaReadyCallback {
-
-    private LatLng position;
-    private GestureDetector gestureDetector;
+public class StreetViewActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streetview);
 
-        // 🔹 Récupération des coordonnées transmises par MapsActivity
+        // Récupérer la position passée depuis MapsActivity
         double lat = getIntent().getDoubleExtra("lat", 0);
         double lng = getIntent().getDoubleExtra("lng", 0);
-        position = new LatLng(lat, lng);
+        final LatLng position = new LatLng(lat, lng);
 
-        // 🔹 Récupération du fragment StreetView
+        // Charger le fragment Street View
         StreetViewPanoramaFragment streetViewFragment =
                 (StreetViewPanoramaFragment) getFragmentManager()
                         .findFragmentById(R.id.streetviewpanorama);
 
         if (streetViewFragment != null) {
-            streetViewFragment.getStreetViewPanoramaAsync(this);
-        }
+            streetViewFragment.getStreetViewPanoramaAsync(
+                    new OnStreetViewPanoramaReadyCallback() {
+                        @Override
+                        public void onStreetViewPanoramaReady(final StreetViewPanorama panorama) {
+                            // Placer la caméra à la position demandée
+                            panorama.setPosition(position);
 
-        // 🔹 Détecteur de gestes (tap simple = quitter)
-        gestureDetector = new GestureDetector(this, new GestureListener());
-    }
+                            // ✅ Activer toutes les options d'interaction
+                            panorama.setUserNavigationEnabled(true);   // Se déplacer dans la rue
+                            panorama.setZoomGesturesEnabled(true);    // Pinch pour zoom
+                            panorama.setPanningGesturesEnabled(true); // Swipe pour tourner caméra
+                            panorama.setStreetNamesEnabled(true);     // Affichage des rues
 
-    @Override
-    public void onStreetViewPanoramaReady(StreetViewPanorama panorama) {
-        if (position != null) {
-            panorama.setPosition(position);
-            panorama.setStreetNamesEnabled(true);
-            panorama.setUserNavigationEnabled(true);
-            panorama.setZoomGesturesEnabled(true);
+                            // 🔹 Synchroniser la position quand on bouge dans Street View
+                            panorama.setOnStreetViewPanoramaChangeListener(
+                                    new StreetViewPanorama.OnStreetViewPanoramaChangeListener() {
+                                        @Override
+                                        public void onStreetViewPanoramaChange(StreetViewPanoramaLocation location) {
+                                            if (location != null && location.position != null) {
+                                                LatLng newPos = location.position;
+                                                Toast.makeText(StreetViewActivity.this,
+                                                        "Nouvelle position : " +
+                                                                newPos.latitude + ", " + newPos.longitude,
+                                                        Toast.LENGTH_SHORT).show();
 
-            Toast.makeText(this,
-                    "Street View chargé : " + position.latitude + ", " + position.longitude,
-                    Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
-    }
-
-    // 🔹 Classe interne pour gérer les gestes
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            Toast.makeText(StreetViewActivity.this, "Retour à la carte", Toast.LENGTH_SHORT).show();
-            finish(); // 🔹 Ferme StreetViewActivity et revient à MapsActivity
-            return true;
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            float diffY = e2.getY() - e1.getY();
-            if (Math.abs(diffY) > 100 && velocityY > 100) {
-                Toast.makeText(StreetViewActivity.this, "Swipe bas : quitter Street View", Toast.LENGTH_SHORT).show();
-                finish();
-                return true;
-            }
-            return false;
+                                                // Ici, tu pourrais envoyer cette nouvelle position à MapsActivity
+                                                // via Intent ou BroadcastReceiver pour déplacer aussi la carte.
+                                            }
+                                        }
+                                    });
+                        }
+                    });
         }
     }
 }
