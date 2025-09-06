@@ -2,12 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.google.gpsarglass">
 
-    <!-- Permissions de base -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Déclare que l’app est faite pour Glass -->
+    <!-- Déclare Glass -->
     <uses-feature
         android:name="android.hardware.type.glass"
         android:required="true" />
@@ -47,10 +47,11 @@
             android:exported="false"
             android:label="Street View" />
 
-        <!-- Meta-data pour API Maps -->
+        <!-- Lien vers la clé API dans google_maps_api.xml -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCa8DC6azFLNM4fiZIsPnWRdvs3SCfNbjI" />
+            android:value="@string/google_maps_key" />
 
     </application>
 </manifest>
+
