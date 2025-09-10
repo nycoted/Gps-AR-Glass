@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.glass.widget.SwipeDismissFrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MapsActivity">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- Carte (Google Maps en WebView) -->
+    <WebView
+        android:id="@+id/webview_map"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent" />
 
-        <fragment
-            android:id="@+id/map"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            map:cameraZoom="10" />
+    <!-- Bouton micro flottant -->
+    <ImageButton
+        android:id="@+id/btn_micro"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="Micro"
+        android:src="@android:drawable/ic_btn_speak_now" />
 
-    </LinearLayout>
-
-</com.google.android.glass.widget.SwipeDismissFrameLayout>
+</FrameLayout>

@@ -1,27 +1,20 @@
 package com.google.gpsarglass;
 
 import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.speech.RecognizerIntent;
 import android.view.Gravity;
+import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,127 +26,78 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-public class MapsActivity extends Activity implements OnMapReadyCallback {
+public class MapsActivity extends Activity {
 
-    private GoogleMap mMap;
-    private static final int VOICE_REQUEST_CODE = 1;
+    private WebView webView;
     private BroadcastReceiver streetViewReceiver;
+    private String apiKey; // 🔑 clé récupérée depuis google_maps_api.xml
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        FragmentManager fm = getFragmentManager();
-        MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        // Charger la clé API depuis res/values/google_maps_api.xml
+        apiKey = getString(R.string.google_maps_key);
 
-        // ✅ Receiver pour écouter StreetViewActivity
+        // WebView Google Maps
+        webView = (WebView) findViewById(R.id.webview_map);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("https://www.google.com/maps");
+
+        // Message d’accueil
+        Toast toast = Toast.makeText(getApplicationContext(),
+                "Swipe vers le bas pour quitter",
+                Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
+
+        // Bouton micro flottant
+        ImageButton btnMicro =(ImageButton) findViewById(R.id.btn_micro);
+        btnMicro.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Exemple : lancer recherche bus quand on clique
+                fetchTransitInfo("bus");
+            }
+        });
+
+        // Receiver StreetView
         streetViewReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if ("com.google.gpsarglass.UPDATE_MAP".equals(intent.getAction())) {
+                if ("OPEN_STREETVIEW".equals(intent.getAction())) {
                     double lat = intent.getDoubleExtra("lat", 0);
                     double lng = intent.getDoubleExtra("lng", 0);
-                    float bearing = intent.getFloatExtra("bearing", 0);
-
-                    LatLng newPoint = new LatLng(lat, lng);
-                    if (mMap != null) {
-                        mMap.clear();
-                        mMap.addMarker(new MarkerOptions().position(newPoint).title("StreetView position"));
-
-                        // Caméra synchronisée avec la direction (bearing)
-                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                .target(newPoint)
-                                .zoom(16)
-                                .bearing(bearing)
-                                .tilt(45)
-                                .build();
-
-                        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                    }
+                    Intent streetViewIntent = new Intent(MapsActivity.this, StreetViewActivity.class);
+                    streetViewIntent.putExtra("lat", lat);
+                    streetViewIntent.putExtra("lng", lng);
+                    startActivity(streetViewIntent);
                 }
             }
         };
-        registerReceiver(streetViewReceiver, new IntentFilter("com.google.gpsarglass.UPDATE_MAP"));
+        registerReceiver(streetViewReceiver, new IntentFilter("OPEN_STREETVIEW"));
 
-        // Démarrage auto de la reconnaissance vocale au lancement
-        startVoiceRecognition();
-    }
-
-    private void startVoiceRecognition() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                "Commande : bus, train, streetview, aller à [adresse]");
-        startActivityForResult(intent, VOICE_REQUEST_CODE);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == VOICE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            if (results != null && !results.isEmpty()) {
-                handleVoiceCommand(results.get(0).toLowerCase());
+        // Exemple : ouvrir Street View fixe (Tour Eiffel) si clic long
+        webView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Intent intent = new Intent(MapsActivity.this, StreetViewActivity.class);
+                intent.putExtra("lat", 48.8584);
+                intent.putExtra("lng", 2.2945);
+                startActivity(intent);
+                return true;
             }
-        }
+        });
     }
 
-    private void handleVoiceCommand(String command) {
-        if (command.contains("bus")) {
-            Toast.makeText(this, "Recherche des horaires bus...", Toast.LENGTH_SHORT).show();
-            fetchTransitInfo("bus");
-        } else if (command.contains("train")) {
-            Toast.makeText(this, "Recherche des horaires train...", Toast.LENGTH_SHORT).show();
-            fetchTransitInfo("train");
-        } else if (command.contains("streetview")) {
-            openStreetView(-34, 151);
-        } else if (command.contains("aller à")) {
-            String destination = command.replace("aller à", "").trim();
-            goToDestination(destination);
-        } else {
-            Toast.makeText(this, "Commande non reconnue : " + command, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void openStreetView(double lat, double lng) {
-        Intent intent = new Intent(this, StreetViewActivity.class);
-        intent.putExtra("lat", lat);
-        intent.putExtra("lng", lng);
-        startActivity(intent);
-    }
-
-    private void goToDestination(String destinationName) {
-        try {
-            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocationName(destinationName, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address address = addresses.get(0);
-                LatLng point = new LatLng(address.getLatitude(), address.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(point).title(destinationName));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 16));
-                openStreetView(address.getLatitude(), address.getLongitude());
-            } else {
-                Toast.makeText(this, "Adresse introuvable : " + destinationName, Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Erreur lors de la recherche d'adresse", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    // 🔹 Appel Google Directions API pour récupérer infos bus/train
+    // 🔹 Recherche horaires bus/train
     private void fetchTransitInfo(String mode) {
         try {
-            String origin = "48.8584,2.2945"; // Exemple : Tour Eiffel
-            String destination = "48.8809,2.3553"; // Exemple : Gare du Nord
-            String apiKey = getString(R.string.google_maps_key); // récupère depuis release/res/values/google_maps_api.xml
+            String origin = "48.8584,2.2945"; // Tour Eiffel
+            String destination = "48.8809,2.3553"; // Gare du Nord
 
             String url = "https://maps.googleapis.com/maps/api/directions/json?" +
                     "origin=" + origin +
@@ -169,6 +113,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
+    // 🔹 AsyncTask pour interroger l’API Directions
     private class FetchTransitTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -205,31 +150,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
                             ? leg.getJSONObject("arrival_time").getString("text")
                             : "Non disponible";
 
+                    // Affichage
                     Toast.makeText(MapsActivity.this,
                             "🚍 Départ : " + departure + "\n🏁 Arrivée : " + arrival,
                             Toast.LENGTH_LONG).show();
-
-                    try {
-                        JSONObject route0 = routes.getJSONObject(0);
-                        JSONArray legs = route0.getJSONArray("legs");
-                        if (legs.length() > 0) {
-                            JSONArray steps = legs.getJSONObject(0).getJSONArray("steps");
-                            List<LatLng> path = new ArrayList<>();
-                            for (int i = 0; i < steps.length(); i++) {
-                                JSONObject step = steps.getJSONObject(i);
-                                if (step.has("polyline")) {
-                                    String poly = step.getJSONObject("polyline").getString("points");
-                                    path.addAll(decodePolyline(poly));
-                                }
-                            }
-                            if (!path.isEmpty() && mMap != null) {
-                                PolylineOptions options = new PolylineOptions().addAll(path).width(8);
-                                mMap.addPolyline(options);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
 
                 } else {
                     Toast.makeText(MapsActivity.this, "Aucun trajet trouvé", Toast.LENGTH_SHORT).show();
@@ -241,11 +165,11 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 
+    // 🔹 Décode polyline (si besoin d’afficher un trajet plus tard)
     private List<LatLng> decodePolyline(String encoded) {
         List<LatLng> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
         int lat = 0, lng = 0;
-
         while (index < len) {
             int b, shift = 0, result = 0;
             do {
@@ -255,7 +179,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             } while (b >= 0x20);
             int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lat += dlat;
-
             shift = 0;
             result = 0;
             do {
@@ -265,27 +188,11 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
             } while (b >= 0x20);
             int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lng += dlng;
-
-            LatLng p = new LatLng(((double) lat / 1E5), ((double) lng / 1E5));
+            LatLng p = new LatLng(((double) lat / 1E5),
+                    ((double) lng / 1E5));
             poly.add(p);
         }
         return poly;
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.getUiSettings().setZoomGesturesEnabled(true);
-
-        Toast toast = Toast.makeText(getApplicationContext(),
-                "Swipe vers le bas pour quitter",
-                Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.CENTER, 0, 0);
-        toast.show();
-
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
     }
 
     @Override
@@ -296,4 +203,3 @@ public class MapsActivity extends Activity implements OnMapReadyCallback {
         }
     }
 }
-
